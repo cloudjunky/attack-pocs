@@ -67,7 +67,7 @@ contract FuseAttackPoC is Test {
         emit log_named_uint("Reserves of Digg", reserveDigg2);
         emit log_named_uint("Reserves of WETH", reserveWeth2);
         emit log_named_uint("LP Balance", lpBalance2);
-        uint profit = (address(myAddress).balance - initialBalance) / 1 ether;
+        uint profit = (address(myAddress).balance - initialBalance);
         emit log_named_uint("Total profit", profit);
         vm.stopPrank();
         assert(true);
